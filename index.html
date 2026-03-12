@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Deel Import Converter</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -53,16 +52,6 @@
     .drop-sub { font-size: 0.8rem; color: var(--gray-400); }
     .drop-sub strong { color: var(--gray-600); }
     .divider { height: 1px; background: var(--gray-100); margin: 1.5rem 0; }
-    .yaml-zone { border: 2px dashed var(--gray-200); border-radius: 12px; padding: 1.25rem 1.5rem; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; background: var(--gray-50); }
-    .yaml-zone:hover, .yaml-zone.drag-over { border-color: var(--brand); background: var(--brand-light); }
-    .yaml-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-    .yaml-zone.has-file { border-color: var(--brand); background: var(--brand-light); }
-    .yaml-zone.has-file .yaml-icon { background: var(--brand-light); }
-    .yaml-zone.has-file .yaml-icon svg { stroke: var(--brand); }
-    .yaml-icon { width: 36px; height: 36px; margin: 0 auto 0.5rem; background: var(--gray-200); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-    .yaml-icon svg { width: 18px; height: 18px; stroke: var(--gray-600); fill: none; }
-    .yaml-title { font-weight: 600; font-size: 0.88rem; color: var(--gray-800); margin-bottom: 0.2rem; }
-    .yaml-sub { font-size: 0.78rem; color: var(--gray-400); }
     .btn-convert { width: 100%; padding: 0.875rem; background: var(--brand); color: white; font-size: 1rem; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; transition: background 0.15s, transform 0.1s; margin-top: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-convert:hover:not(:disabled) { background: var(--brand-dark); }
     .btn-convert:active:not(:disabled) { transform: scale(0.99); }
@@ -109,7 +98,7 @@
   <h1>Employee Import Converter</h1>
   <p>Upload your employee spreadsheet and get a Deel-ready import file in seconds. No manual reformatting, no copy-pasting.</p>
   <div class="steps">
-    <div class="step"><div class="step-num">1</div> Upload your spreadsheet + config</div>
+    <div class="step"><div class="step-num">1</div> Upload your employee spreadsheet</div>
     <div class="step"><div class="step-num">2</div> Convert &amp; download the Deel CSV</div>
   </div>
 </div>
@@ -130,21 +119,6 @@
         </div>
         <div class="drop-title" id="dropTitle">Drop your file here or click to browse</div>
         <div class="drop-sub"><strong>.xlsx, .xls, .csv</strong> &nbsp;·&nbsp; Max 20 MB</div>
-      </div>
-
-      <div class="divider"></div>
-
-      <!-- Config YAML upload -->
-      <div class="field-label">Config file</div>
-      <div class="yaml-zone" id="yamlZone">
-        <input type="file" id="yamlInput" accept=".yaml,.yml" />
-        <div class="yaml-icon">
-          <svg viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
-          </svg>
-        </div>
-        <div class="yaml-title" id="yamlTitle">Drop your config here or click to browse</div>
-        <div class="yaml-sub"><strong>.yaml, .yml</strong></div>
       </div>
 
       <div class="divider"></div>
@@ -205,93 +179,64 @@
 
 <script>
 // ─────────────────────────────────────────────────────────────
-// SECTION 1: BUILT-IN CONFIGS
+// SECTION 1: UNIVERSAL CONFIG (handles all clients)
 // ─────────────────────────────────────────────────────────────
-const BUILTIN_CONFIGS = {
-  apres_capital: {
-    source: {
-      sheet_name: "EOB",
-      header_rows: { main_header_row: 3, sub_header_row: 4 },
-      sub_header_for_groups: ["Employee address"],
-      data_start_row: 5,
-      sub_header_overrides: {}
-    },
-    target: {
-      metadata_rows: 6,
-      field_column: "FIELD",
-      columns: ["FIELD","Employee first name","Employee last name","Personal email","Zip code","State code","City","County","Home address","Employee Nationality","Work location","Job title","Seniority level","Job scope","Employment type","Pay method","Contract start date","Gross Salary","Time off","Benefit group","Department","Department role"],
-      metadata: { mandatory_fields: ["Employee first name","Employee last name","Personal email","Contract start date","Gross Salary","Employment type"] }
-    },
-    mappings: {
-      "Employee first name":  { source_header: "First" },
-      "Employee last name":   { source_header: "Last Name" },
-      "Personal email":       { source_header: "Personal Email Address" },
-      "Zip code":             { source_header: "Zip / Postal Code: 5 digits" },
-      "State code":           { source_header: "State", transform: "state_to_code" },
-      "City":                 { source_header: "City" },
-      "County":               { blank: true },
-      "Home address":         { source_header: "Street name and number" },
-      "Employee Nationality": { source_header: "Employee nationality", transform: "country_to_iso2" },
-      "Work location":        { source_header: "Working location" },
-      "Job title":            { source_header: "Job Title" },
-      "Seniority level":      { source_header: "~Seniority", transform: "seniority_map" },
-      "Job scope":            { source_header: "Job description" },
-      "Employment type":      { source_header: "Employment Type", transform: "employment_type_map" },
-      "Pay method":           { source_header: "Compensation Type", transform: "pay_method_map" },
-      "Contract start date":  { source_header: "Original start date", transform: "excel_date_to_iso" },
-      "Gross Salary":         { source_header: "Pay Rate", transform: "clean_salary" },
-      "Time off":             { blank: true },
-      "Benefit group":        { default: "ALL EMPLOYEES" },
-      "Department":           { source_header: "Department (optional)", optional: true },
-      "Department role":      { source_header: "Project Manager (optional)", optional: true }
-    },
-    transforms: {
-      pay_method_map:       { "Salary": "SALARY", "Hourly": "HOURLY", "Commission": "COMMISSION_ONLY", "Non-Paid Owner": "NON_PAID_OWNER" },
-      employment_type_map:  { "Full-time": "full-time", "Full Time": "full-time", "Part-Time": "part-time", "Part Time": "part-time", "Contract": "contractor" },
-      seniority_map:        { "C-Level Executive": "C-Level Executives", "C-Level Executives": "C-Level Executives", "Director": "Director", "Vice President": "Vice President", "Senior Vice President": "Senior Vice President", "Head of Department": "Head of Department", "Lead": "Lead", "Principal": "Principal/Staff", "Principal/Staff": "Principal/Staff", "Senior": "Senior", "Mid": "Mid (Individual Contributor Level 2)", "Junior": "Junior (Individual Contributor Level 1)", "Not applicable": "Not applicable", "N/A": "Not applicable" }
-    }
+const UNIVERSAL_CONFIG = {
+  source: {
+    sheet_name: "EOB",
+    header_rows: { main_header_row: 3, sub_header_row: 4 },
+    sub_header_for_groups: ["Employee address"],
+    data_start_row: 5,
+    sub_header_overrides: {}
   },
-  cea_capa: {
-    source: {
-      sheet_name: "EOB",
-      header_rows: { main_header_row: 3, sub_header_row: 4 },
-      sub_header_for_groups: ["Employee address"],
-      data_start_row: 5,
-      sub_header_overrides: {}
+  target: {
+    metadata_rows: 6,
+    field_column: "FIELD",
+    columns: ["FIELD","Employee first name","Employee last name","Personal email","Zip code","State code","City","County","Home address","Employee Nationality","Work location","Job title","Seniority level","Job scope","Employment type","Pay method","Contract start date","Gross Salary","Time off","Benefit group","Department","Department role"],
+    metadata: { mandatory_fields: ["Employee first name","Employee last name","Personal email","Contract start date","Gross Salary","Employment type"] }
+  },
+  mappings: {
+    "Employee first name":  { source_header: "First" },
+    "Employee last name":   { source_header: "Last Name" },
+    "Personal email":       { source_header: "Personal Email Address" },
+    "Zip code":             { source_header: "Zip / Postal Code: 5 digits" },
+    "State code":           { source_header: "State", transform: "state_to_code" },
+    "City":                 { source_header: "City" },
+    "County":               { blank: true },
+    "Home address":         { source_header: "Street name and number" },
+    "Employee Nationality": { source_header: "Employee nationality", transform: "country_to_iso2", optional: true },
+    "Work location":        { source_header: "Working location", transform: "strip_code_prefix" },
+    "Job title":            { source_header: "Job Title", transform: "strip_code_prefix" },
+    "Seniority level":      { source_header: "~Seniority", transform: "seniority_map", optional: true },
+    "Job scope":            { source_header: "Job description", optional: true },
+    "Employment type":      { source_header: "Employment Type", transform: "employment_type_map" },
+    "Pay method":           { source_header: "Compensation Type", transform: "pay_method_map" },
+    "Contract start date":  { source_header: "Original start date", transform: "excel_date_to_iso" },
+    "Gross Salary":         { source_header: "Pay Rate", transform: "clean_salary" },
+    "Time off":             { blank: true },
+    "Benefit group":        { default: "ALL EMPLOYEES" },
+    "Department":           { source_header: "Department (optional)", transform: "strip_code_prefix", optional: true },
+    "Department role":      { blank: true }
+  },
+  transforms: {
+    employment_type_map: {
+      "F - Full Time": "full-time", "FT - Full Time": "full-time",
+      "Full Time": "full-time", "Full-time": "full-time", "full-time": "full-time",
+      "P - Part Time": "part-time", "Part Time": "part-time", "Part-Time": "part-time",
+      "INT - Intern": "full-time", "Contract": "contractor"
     },
-    target: {
-      metadata_rows: 6,
-      field_column: "FIELD",
-      columns: ["FIELD","Employee first name","Employee last name","Personal email","Zip code","State code","City","County","Home address","Employee Nationality","Work location","Job title","Seniority level","Job scope","Employment type","Pay method","Contract start date","Gross Salary","Time off","Benefit group","Department","Department role"],
-      metadata: { mandatory_fields: ["Employee first name","Employee last name","Personal email","Contract start date","Gross Salary","Employment type"] }
+    pay_method_map: {
+      "Salary": "SALARY", "Hourly": "HOURLY",
+      "Commission": "COMMISSION_ONLY", "Non-Paid Owner": "NON_PAID_OWNER"
     },
-    mappings: {
-      "Employee first name":  { source_header: "First" },
-      "Employee last name":   { source_header: "Last Name" },
-      "Personal email":       { source_header: "Personal Email Address" },
-      "Zip code":             { source_header: "Zip / Postal Code: 5 digits" },
-      "State code":           { source_header: "State", transform: "state_to_code" },
-      "City":                 { source_header: "City" },
-      "County":               { blank: true },
-      "Home address":         { source_header: "Street name and number" },
-      "Employee Nationality": { source_header: "Employee nationality", transform: "country_to_iso2", optional: true },
-      "Work location":        { source_header: "Working location", transform: "strip_code_prefix" },
-      "Job title":            { source_header: "Job Title", transform: "strip_code_prefix" },
-      "Seniority level":      { source_header: "~Seniority", transform: "seniority_map", optional: true },
-      "Job scope":            { source_header: "Job description", optional: true },
-      "Employment type":      { source_header: "Employment Type", transform: "employment_type_map" },
-      "Pay method":           { source_header: "Compensation Type", transform: "pay_method_map" },
-      "Contract start date":  { source_header: "Original start date", transform: "excel_date_to_iso" },
-      "Gross Salary":         { source_header: "Pay Rate", transform: "clean_salary" },
-      "Time off":             { blank: true },
-      "Benefit group":        { default: "ALL EMPLOYEES" },
-      "Department":           { source_header: "Department (optional)", transform: "strip_code_prefix", optional: true },
-      "Department role":      { blank: true }
-    },
-    transforms: {
-      employment_type_map: { "F - Full Time": "full-time", "FT - Full Time": "full-time", "Full Time": "full-time", "Full-time": "full-time", "P - Part Time": "part-time", "Part Time": "part-time", "Part-Time": "part-time", "INT - Intern": "full-time" },
-      pay_method_map:      { "Salary": "SALARY", "Hourly": "HOURLY" },
-      seniority_map:       { "C-Level Executive": "C-Level Executives", "C-Level Executives": "C-Level Executives", "Director": "Director", "Vice President": "Vice President", "Senior Vice President": "Senior Vice President", "Head of Department": "Head of Department", "Lead": "Lead", "Principal": "Principal/Staff", "Principal/Staff": "Principal/Staff", "Senior": "Senior", "Mid": "Mid (Individual Contributor Level 2)", "Junior": "Junior (Individual Contributor Level 1)", "Not applicable": "Not applicable", "N/A": "Not applicable" }
+    seniority_map: {
+      "C-Level Executive": "C-Level Executives", "C-Level Executives": "C-Level Executives",
+      "Director": "Director", "Vice President": "Vice President",
+      "Senior Vice President": "Senior Vice President", "Head of Department": "Head of Department",
+      "Lead": "Lead", "Principal": "Principal/Staff", "Principal/Staff": "Principal/Staff",
+      "Senior": "Senior", "Mid": "Mid (Individual Contributor Level 2)",
+      "Junior": "Junior (Individual Contributor Level 1)",
+      "Not applicable": "Not applicable", "N/A": "Not applicable"
     }
   }
 };
@@ -637,9 +582,6 @@ async function runConvert(sourceFile, config) {
 const dropZone   = document.getElementById('dropZone');
 const fileInput  = document.getElementById('fileInput');
 const dropTitle  = document.getElementById('dropTitle');
-const yamlZone   = document.getElementById('yamlZone');
-const yamlInput  = document.getElementById('yamlInput');
-const yamlTitle  = document.getElementById('yamlTitle');
 const convertBtn = document.getElementById('convertBtn');
 const spinner    = document.getElementById('spinner');
 const btnIcon    = document.getElementById('btnIcon');
@@ -656,12 +598,6 @@ dropZone.addEventListener('drop', ev => { const f = ev.dataTransfer.files[0]; if
 fileInput.addEventListener('change', () => { if (fileInput.files.length) onSourceFile(fileInput.files[0]); });
 function onSourceFile(f) { dropZone.classList.add('has-file'); dropTitle.textContent = f.name; }
 
-// Drag-and-drop: config YAML
-['dragenter','dragover'].forEach(e => yamlZone.addEventListener(e, ev => { ev.preventDefault(); yamlZone.classList.add('drag-over'); }));
-['dragleave','drop'].forEach(e => yamlZone.addEventListener(e, ev => { ev.preventDefault(); yamlZone.classList.remove('drag-over'); }));
-yamlZone.addEventListener('drop', ev => { const f = ev.dataTransfer.files[0]; if (f) { yamlInput.files = ev.dataTransfer.files; onYamlFile(f); } });
-yamlInput.addEventListener('change', () => { if (yamlInput.files.length) onYamlFile(yamlInput.files[0]); });
-function onYamlFile(f) { yamlZone.classList.add('has-file'); yamlTitle.textContent = f.name; }
 
 function setLoading(on) {
   convertBtn.disabled = on;
@@ -679,22 +615,13 @@ function showResult(type, msg) {
 
 convertBtn.addEventListener('click', async () => {
   if (!fileInput.files.length) { showResult('error', 'Please select a source spreadsheet first.'); return; }
-  if (!yamlInput.files.length) { showResult('error', 'Please upload a config YAML file first.'); return; }
-
-  let config;
-  try {
-    const yamlText = await yamlInput.files[0].text();
-    config = jsyaml.load(yamlText);
-  } catch (e) {
-    showResult('error', 'Could not read config YAML: ' + e.message); return;
-  }
 
   setLoading(true);
   resultOk.style.display = 'none';
   resultErr.style.display = 'none';
 
   try {
-    const csvText = await runConvert(fileInput.files[0], config);
+    const csvText = await runConvert(fileInput.files[0], UNIVERSAL_CONFIG);
     const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
     const stem = fileInput.files[0].name.replace(/\.[^.]+$/, '');
     const filename = `${stem}_deel_import.csv`;
