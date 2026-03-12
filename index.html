@@ -53,19 +53,16 @@
     .drop-sub { font-size: 0.8rem; color: var(--gray-400); }
     .drop-sub strong { color: var(--gray-600); }
     .divider { height: 1px; background: var(--gray-100); margin: 1.5rem 0; }
-    .config-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
-    .config-option { display: none; }
-    .config-label { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 2px solid var(--gray-200); border-radius: 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s; font-size: 0.88rem; font-weight: 500; }
-    .config-label:hover { border-color: var(--brand); }
-    .config-option:checked + .config-label { border-color: var(--brand); background: var(--brand-light); color: var(--brand); }
-    .config-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray-300); flex-shrink: 0; transition: background 0.15s; }
-    .config-option:checked + .config-label .config-dot { background: var(--brand); }
-    .custom-yaml-zone { display: none; margin-top: 0.75rem; border: 2px dashed var(--gray-200); border-radius: 10px; padding: 1.25rem; background: var(--gray-50); position: relative; cursor: pointer; text-align: center; transition: border-color 0.2s, background 0.2s; }
-    .custom-yaml-zone:hover, .custom-yaml-zone.drag-over { border-color: var(--brand); background: var(--brand-light); }
-    .custom-yaml-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-    .custom-yaml-zone.has-file { border-color: var(--brand); background: var(--brand-light); }
-    .yaml-label { font-size: 0.85rem; color: var(--gray-600); font-weight: 500; }
-    .yaml-label strong { color: var(--gray-800); }
+    .yaml-zone { border: 2px dashed var(--gray-200); border-radius: 12px; padding: 1.25rem 1.5rem; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; background: var(--gray-50); }
+    .yaml-zone:hover, .yaml-zone.drag-over { border-color: var(--brand); background: var(--brand-light); }
+    .yaml-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .yaml-zone.has-file { border-color: var(--brand); background: var(--brand-light); }
+    .yaml-zone.has-file .yaml-icon { background: var(--brand-light); }
+    .yaml-zone.has-file .yaml-icon svg { stroke: var(--brand); }
+    .yaml-icon { width: 36px; height: 36px; margin: 0 auto 0.5rem; background: var(--gray-200); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .yaml-icon svg { width: 18px; height: 18px; stroke: var(--gray-600); fill: none; }
+    .yaml-title { font-weight: 600; font-size: 0.88rem; color: var(--gray-800); margin-bottom: 0.2rem; }
+    .yaml-sub { font-size: 0.78rem; color: var(--gray-400); }
     .btn-convert { width: 100%; padding: 0.875rem; background: var(--brand); color: white; font-size: 1rem; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; transition: background 0.15s, transform 0.1s; margin-top: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-convert:hover:not(:disabled) { background: var(--brand-dark); }
     .btn-convert:active:not(:disabled) { transform: scale(0.99); }
@@ -112,7 +109,7 @@
   <h1>Employee Import Converter</h1>
   <p>Upload your employee spreadsheet and get a Deel-ready import file in seconds. No manual reformatting, no copy-pasting.</p>
   <div class="steps">
-    <div class="step"><div class="step-num">1</div> Upload your employee spreadsheet</div>
+    <div class="step"><div class="step-num">1</div> Upload your spreadsheet + config</div>
     <div class="step"><div class="step-num">2</div> Convert &amp; download the Deel CSV</div>
   </div>
 </div>
@@ -137,23 +134,17 @@
 
       <div class="divider"></div>
 
-      <!-- Config selector -->
-      <div class="field-label">Client config</div>
-      <div class="config-grid" id="configGrid">
-        <input type="radio" class="config-option" name="config" id="cfg_apres_capital" value="apres_capital" checked />
-        <label class="config-label" for="cfg_apres_capital"><span class="config-dot"></span>Apres Capital</label>
-
-        <input type="radio" class="config-option" name="config" id="cfg_cea_capa" value="cea_capa" />
-        <label class="config-label" for="cfg_cea_capa"><span class="config-dot"></span>CEA CAPA</label>
-
-        <input type="radio" class="config-option" name="config" id="cfg_custom" value="custom" />
-        <label class="config-label" for="cfg_custom"><span class="config-dot"></span>Custom YAML</label>
-      </div>
-
-      <!-- Custom YAML upload (shown when Custom is selected) -->
-      <div class="custom-yaml-zone" id="yamlZone">
+      <!-- Config YAML upload -->
+      <div class="field-label">Config file</div>
+      <div class="yaml-zone" id="yamlZone">
         <input type="file" id="yamlInput" accept=".yaml,.yml" />
-        <div class="yaml-label" id="yamlLabel"><strong>Upload your config YAML</strong><br/>Click or drag a .yaml file here</div>
+        <div class="yaml-icon">
+          <svg viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+          </svg>
+        </div>
+        <div class="yaml-title" id="yamlTitle">Drop your config here or click to browse</div>
+        <div class="yaml-sub"><strong>.yaml, .yml</strong></div>
       </div>
 
       <div class="divider"></div>
@@ -643,49 +634,34 @@ async function runConvert(sourceFile, config) {
 // ─────────────────────────────────────────────────────────────
 // SECTION 9: UI
 // ─────────────────────────────────────────────────────────────
-const dropZone    = document.getElementById('dropZone');
-const fileInput   = document.getElementById('fileInput');
-const dropTitle   = document.getElementById('dropTitle');
-const yamlZone    = document.getElementById('yamlZone');
-const yamlInput   = document.getElementById('yamlInput');
-const yamlLabel   = document.getElementById('yamlLabel');
-const convertBtn  = document.getElementById('convertBtn');
-const spinner     = document.getElementById('spinner');
-const btnIcon     = document.getElementById('btnIcon');
-const btnLabel    = document.getElementById('btnLabel');
-const resultOk    = document.getElementById('resultSuccess');
-const resultErr   = document.getElementById('resultError');
-const successMsg  = document.getElementById('successMsg');
-const errorMsg    = document.getElementById('errorMsg');
+const dropZone   = document.getElementById('dropZone');
+const fileInput  = document.getElementById('fileInput');
+const dropTitle  = document.getElementById('dropTitle');
+const yamlZone   = document.getElementById('yamlZone');
+const yamlInput  = document.getElementById('yamlInput');
+const yamlTitle  = document.getElementById('yamlTitle');
+const convertBtn = document.getElementById('convertBtn');
+const spinner    = document.getElementById('spinner');
+const btnIcon    = document.getElementById('btnIcon');
+const btnLabel   = document.getElementById('btnLabel');
+const resultOk   = document.getElementById('resultSuccess');
+const resultErr  = document.getElementById('resultError');
+const successMsg = document.getElementById('successMsg');
+const errorMsg   = document.getElementById('errorMsg');
 
-// Drag-and-drop for source file
+// Drag-and-drop: source file
 ['dragenter','dragover'].forEach(e => dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.add('drag-over'); }));
 ['dragleave','drop'].forEach(e => dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.remove('drag-over'); }));
-dropZone.addEventListener('drop', ev => { const f = ev.dataTransfer.files[0]; if (f) { fileInput.files = ev.dataTransfer.files; onSourceFileSelected(f); } });
-fileInput.addEventListener('change', () => { if (fileInput.files.length) onSourceFileSelected(fileInput.files[0]); });
+dropZone.addEventListener('drop', ev => { const f = ev.dataTransfer.files[0]; if (f) { fileInput.files = ev.dataTransfer.files; onSourceFile(f); } });
+fileInput.addEventListener('change', () => { if (fileInput.files.length) onSourceFile(fileInput.files[0]); });
+function onSourceFile(f) { dropZone.classList.add('has-file'); dropTitle.textContent = f.name; }
 
-function onSourceFileSelected(file) {
-  dropZone.classList.add('has-file');
-  dropTitle.textContent = file.name;
-}
-
-// Drag-and-drop for YAML
+// Drag-and-drop: config YAML
 ['dragenter','dragover'].forEach(e => yamlZone.addEventListener(e, ev => { ev.preventDefault(); yamlZone.classList.add('drag-over'); }));
 ['dragleave','drop'].forEach(e => yamlZone.addEventListener(e, ev => { ev.preventDefault(); yamlZone.classList.remove('drag-over'); }));
-yamlZone.addEventListener('drop', ev => { const f = ev.dataTransfer.files[0]; if (f) { yamlInput.files = ev.dataTransfer.files; onYamlSelected(f); } });
-yamlInput.addEventListener('change', () => { if (yamlInput.files.length) onYamlSelected(yamlInput.files[0]); });
-
-function onYamlSelected(file) {
-  yamlZone.classList.add('has-file');
-  yamlLabel.innerHTML = `<strong>${file.name}</strong><br/><span style="font-size:0.75rem;color:var(--brand)">Config loaded ✓</span>`;
-}
-
-// Show/hide custom YAML zone
-document.querySelectorAll('input[name="config"]').forEach(radio => {
-  radio.addEventListener('change', () => {
-    yamlZone.style.display = radio.value === 'custom' && radio.checked ? 'block' : 'none';
-  });
-});
+yamlZone.addEventListener('drop', ev => { const f = ev.dataTransfer.files[0]; if (f) { yamlInput.files = ev.dataTransfer.files; onYamlFile(f); } });
+yamlInput.addEventListener('change', () => { if (yamlInput.files.length) onYamlFile(yamlInput.files[0]); });
+function onYamlFile(f) { yamlZone.classList.add('has-file'); yamlTitle.textContent = f.name; }
 
 function setLoading(on) {
   convertBtn.disabled = on;
@@ -702,21 +678,15 @@ function showResult(type, msg) {
 }
 
 convertBtn.addEventListener('click', async () => {
-  if (!fileInput.files.length) { showResult('error', 'Please select a source file first.'); return; }
+  if (!fileInput.files.length) { showResult('error', 'Please select a source spreadsheet first.'); return; }
+  if (!yamlInput.files.length) { showResult('error', 'Please upload a config YAML file first.'); return; }
 
-  const selectedConfig = document.querySelector('input[name="config"]:checked').value;
   let config;
-
-  if (selectedConfig === 'custom') {
-    if (!yamlInput.files.length) { showResult('error', 'Please upload a custom YAML config file.'); return; }
-    try {
-      const yamlText = await yamlInput.files[0].text();
-      config = jsyaml.load(yamlText);
-    } catch (e) {
-      showResult('error', 'Failed to parse YAML config: ' + e.message); return;
-    }
-  } else {
-    config = BUILTIN_CONFIGS[selectedConfig];
+  try {
+    const yamlText = await yamlInput.files[0].text();
+    config = jsyaml.load(yamlText);
+  } catch (e) {
+    showResult('error', 'Could not read config YAML: ' + e.message); return;
   }
 
   setLoading(true);
