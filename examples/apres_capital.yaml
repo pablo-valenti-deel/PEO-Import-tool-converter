@@ -1,0 +1,196 @@
+# ============================================================
+# Deel Converter Config — Apres Capital LLC
+# Source: EOB sheet in "Apres Capital LLC EE Import.xlsx"
+# Target: Deel People Import CSV format
+# ============================================================
+
+source:
+  sheet_name: "EOB"
+
+  # Row numbers (1-based) for the compound header structure.
+  # Row 3 = main column headers (First, Last Name, etc.)
+  # Row 4 = sub-headers for the address block (Zip, State, City, Street)
+  header_rows:
+    main_header_row: 3
+    sub_header_row: 4
+
+  # Instead of hardcoding column indices, list any "group" header names
+  # whose columns should be identified by their row-4 sub-header name.
+  # This makes the config work even if column positions shift.
+  sub_header_for_groups:
+    - "Employee address"   # row 3 merged header → use row 4 names for its columns
+
+  # Row number (1-based) where actual employee data begins.
+  data_start_row: 5
+
+# ============================================================
+# Target (Deel template) settings
+# ============================================================
+
+target:
+  metadata_rows: 6         # Number of header/metadata rows above the data
+  field_column: "FIELD"    # The sequential row-number column name
+
+  # Ordered list of output columns — must match Deel's import template exactly.
+  columns:
+    - "FIELD"
+    - "Employee first name"
+    - "Employee last name"
+    - "Personal email"
+    - "Zip code"
+    - "State code"
+    - "City"
+    - "County"
+    - "Home address"
+    - "Employee Nationality"
+    - "Work location"
+    - "Job title"
+    - "Seniority level"
+    - "Job scope"
+    - "Employment type"
+    - "Pay method"
+    - "Contract start date"
+    - "Gross Salary"
+    - "Time off"
+    - "Benefit group"
+    - "Department"
+    - "Department role"
+
+  # Fields to mark as MANDATORY in the metadata row.
+  metadata:
+    mandatory_fields:
+      - "Employee first name"
+      - "Employee last name"
+      - "Personal email"
+      - "Contract start date"
+      - "Gross Salary"
+      - "Employment type"
+
+# ============================================================
+# Column mappings
+#
+# Each key is a Deel target column name. Options:
+#   source_header: "Header name"  → find column by header name (robust to column shifts)
+#   source_col: "A"               → map from this Excel column letter (positional fallback)
+#   default: "value"              → use this static value for every row
+#   blank: true                   → always output an empty string
+#   optional: true                → suppress warning if source_header is not found
+#                                   (useful when column may not exist in all file variants)
+#
+# Optional: transform: <name>    → apply a built-in transformation
+# Prefix source_header with "~"  → starts-with matching (e.g. "~Seniority" matches
+#                                   "Seniority: Junior, Mid, Senior, Lead, ...")
+# ============================================================
+
+mappings:
+  "Employee first name":
+    source_header: "First"
+
+  "Employee last name":
+    source_header: "Last Name"
+
+  "Personal email":
+    source_header: "Personal Email Address"
+
+  # Address sub-columns are auto-resolved via sub_header_for_groups above.
+  # The "Employee address" group header is replaced with each column's row-4 sub-header.
+  "Zip code":
+    source_header: "Zip / Postal Code: 5 digits"
+
+  "State code":
+    source_header: "State"
+    transform: "state_to_code"
+
+  "City":
+    source_header: "City"
+
+  "County":
+    blank: true       # Not available in source; left empty per Deel spec
+
+  "Home address":
+    source_header: "Street name and number"
+
+  "Employee Nationality":
+    source_header: "Employee nationality"
+    transform: "country_to_iso2"
+
+  "Work location":
+    source_header: "Working location"
+
+  "Job title":
+    source_header: "Job Title"
+
+  "Seniority level":
+    source_header: "~Seniority"   # matches the full "Seniority: Junior, Mid, Senior…" header
+    transform: "seniority_map"
+
+  "Job scope":
+    source_header: "Job description"
+
+  "Employment type":
+    source_header: "Employment Type"
+    transform: "employment_type_map"
+
+  "Pay method":
+    source_header: "Compensation Type"
+    transform: "pay_method_map"
+
+  "Contract start date":
+    source_header: "Original start date"
+    transform: "excel_date_to_iso"
+
+  "Gross Salary":
+    source_header: "Pay Rate"
+    transform: "clean_salary"
+
+  "Time off":
+    blank: true       # Not mapped; left empty per Deel spec
+
+  "Benefit group":
+    default: "ALL EMPLOYEES"
+
+  "Department":
+    source_header: "Department (optional)"
+    optional: true    # Not present in Apres Capital EOB; silently blank if missing
+
+  "Department role":
+    source_header: "Project Manager (optional)"
+    optional: true    # Not present in Apres Capital EOB; silently blank if missing
+
+# ============================================================
+# Value maps for transform functions
+#
+# These override / extend the built-in defaults.
+# Add entries here for any values in your source file that
+# aren't handled automatically.
+# ============================================================
+
+transforms:
+  pay_method_map:
+    "Salary": "SALARY"
+    "Hourly": "HOURLY"
+    "Commission": "COMMISSION_ONLY"
+    "Non-Paid Owner": "NON_PAID_OWNER"
+
+  employment_type_map:
+    "Full-time": "full-time"
+    "Full Time": "full-time"
+    "Part-Time": "part-time"
+    "Part Time": "part-time"
+    "Contract": "contractor"
+
+  seniority_map:
+    "C-Level Executive": "C-Level Executives"
+    "C-Level Executives": "C-Level Executives"
+    "Director": "Director"
+    "Vice President": "Vice President"
+    "Senior Vice President": "Senior Vice President"
+    "Head of Department": "Head of Department"
+    "Lead": "Lead"
+    "Principal": "Principal/Staff"
+    "Principal/Staff": "Principal/Staff"
+    "Senior": "Senior"
+    "Mid": "Mid (Individual Contributor Level 2)"
+    "Junior": "Junior (Individual Contributor Level 1)"
+    "Not applicable": "Not applicable"
+    "N/A": "Not applicable"

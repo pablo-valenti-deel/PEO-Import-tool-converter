@@ -1,0 +1,191 @@
+# ============================================================
+# Deel Converter Config — CEA CAPA
+# Source: EOB sheet in "CEA CAPA Employee Census.xlsx"
+# Target: Deel People Import CSV format
+# ============================================================
+#
+# NOTE: This file uses a "CODE - Description" convention in many columns
+# (e.g. "F - Full Time", "REM - Remote", "000200 - Institutional Relations").
+# The built-in `strip_code_prefix` transform automatically removes the prefix,
+# keeping only the human-readable description.
+# ============================================================
+
+source:
+  sheet_name: "EOB"
+
+  # Row numbers (1-based) for the compound header structure.
+  # Row 1 = section group headers (Department information / Employee Information / ...)
+  # Row 2 = "NEW" markers (ignored)
+  # Row 3 = main column headers
+  # Row 4 = sub-headers for address block columns
+  header_rows:
+    main_header_row: 3
+    sub_header_row: 4
+
+  # Auto-resolve columns under the "Employee address" merged group header
+  # to use their individual row-4 sub-header names.
+  sub_header_for_groups:
+    - "Employee address"
+
+  # Row number (1-based) where actual employee data begins.
+  data_start_row: 5
+
+# ============================================================
+# Target (Deel template) settings
+# ============================================================
+
+target:
+  metadata_rows: 6
+  field_column: "FIELD"
+
+  columns:
+    - "FIELD"
+    - "Employee first name"
+    - "Employee last name"
+    - "Personal email"
+    - "Zip code"
+    - "State code"
+    - "City"
+    - "County"
+    - "Home address"
+    - "Employee Nationality"
+    - "Work location"
+    - "Job title"
+    - "Seniority level"
+    - "Job scope"
+    - "Employment type"
+    - "Pay method"
+    - "Contract start date"
+    - "Gross Salary"
+    - "Time off"
+    - "Benefit group"
+    - "Department"
+    - "Department role"
+
+  metadata:
+    mandatory_fields:
+      - "Employee first name"
+      - "Employee last name"
+      - "Personal email"
+      - "Contract start date"
+      - "Gross Salary"
+      - "Employment type"
+
+# ============================================================
+# Column mappings
+# ============================================================
+
+mappings:
+  "Employee first name":
+    source_header: "First"
+
+  "Employee last name":
+    source_header: "Last Name"
+
+  "Personal email":
+    source_header: "Personal Email Address"
+
+  # Address sub-columns auto-resolved via sub_header_for_groups above.
+  "Zip code":
+    source_header: "Zip / Postal Code: 5 digits"
+
+  "State code":
+    source_header: "State"
+    transform: "state_to_code"   # already 2-letter codes (IN, AZ, GA…)
+
+  "City":
+    source_header: "City"
+
+  "County":
+    blank: true
+
+  "Home address":
+    source_header: "Street name and number"
+
+  "Employee Nationality":
+    source_header: "Employee nationality"
+    transform: "country_to_iso2"
+    optional: true    # often blank in this file
+
+  "Work location":
+    source_header: "Working location"
+    transform: "strip_code_prefix"   # "REM - Remote" → "Remote", "HQ - Phoenix" → "Phoenix"
+
+  "Job title":
+    source_header: "Job Title"
+    transform: "strip_code_prefix"   # "DMM - Director of Digital Marketing" → "Director of Digital Marketing"
+
+  "Seniority level":
+    source_header: "~Seniority"      # matches "Seniority: Junior, Mid, Senior, Lead, ..."
+    transform: "seniority_map"
+    optional: true    # often blank in this file
+
+  "Job scope":
+    source_header: "Job description"
+    optional: true    # often blank in this file
+
+  "Employment type":
+    source_header: "Employment Type"
+    transform: "employment_type_map"  # see value map below
+
+  "Pay method":
+    source_header: "Compensation Type"
+    transform: "pay_method_map"
+
+  "Contract start date":
+    source_header: "Original start date"
+    transform: "excel_date_to_iso"
+
+  "Gross Salary":
+    source_header: "Pay Rate"
+    transform: "clean_salary"
+
+  "Time off":
+    blank: true
+
+  "Benefit group":
+    default: "ALL EMPLOYEES"
+
+  "Department":
+    source_header: "Department (optional)"
+    transform: "strip_code_prefix"   # "000200 - Institutional Relations" → "Institutional Relations"
+    optional: true
+
+  "Department role":
+    blank: true    # "Direct Manager" in source is a manager reference, not a Deel role
+
+# ============================================================
+# Value maps for transform functions
+# ============================================================
+
+transforms:
+  employment_type_map:
+    # Source uses "CODE - Label" format; map all known variants
+    "F - Full Time":    "full-time"
+    "FT - Full Time":   "full-time"
+    "Full Time":        "full-time"
+    "Full-time":        "full-time"
+    "P - Part Time":    "part-time"
+    "Part Time":        "part-time"
+    "Part-Time":        "part-time"
+    "INT - Intern":     "full-time"   # Deel has no "intern" type; treat as full-time
+
+  pay_method_map:
+    "Salary": "SALARY"
+    "Hourly": "HOURLY"
+
+  seniority_map:
+    "C-Level Executive":    "C-Level Executives"
+    "C-Level Executives":   "C-Level Executives"
+    "Director":             "Director"
+    "Vice President":       "Vice President"
+    "Senior Vice President": "Senior Vice President"
+    "Head of Department":   "Head of Department"
+    "Lead":                 "Lead"
+    "Principal":            "Principal/Staff"
+    "Principal/Staff":      "Principal/Staff"
+    "Senior":               "Senior"
+    "Mid":                  "Mid (Individual Contributor Level 2)"
+    "Junior":               "Junior (Individual Contributor Level 1)"
+    "Not applicable":       "Not applicable"
+    "N/A":                  "Not applicable"

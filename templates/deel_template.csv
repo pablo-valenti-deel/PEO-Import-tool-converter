@@ -1,0 +1,31 @@
+FIELD,Employee first name,Employee last name,Personal email,Zip code,State code,City,County,Home address,Employee Nationality,Work location,Job title,Seniority level,Job scope,Employment type,Pay method,Contract start date,Gross Salary,Time off,Benefit group,Department,Department role
+MANDATORY/OPTIONAL,Mandatory,Mandatory,Mandatory,Mandatory,Mandatory,Mandatory,(Optional),Mandatory,Mandatory,(Optional),Mandatory,Mandatory,(Optional),Mandatory,Mandatory,Mandatory,(Optional),(Optional),(Optional),(Optional),(Optional)
+DESCRIPTION,Worker's first legal name,Worker's legal last name,Worker will receive an invite to sign up for Deel via this email address,The zip code of the employee's address,Worker's tax residency state,The city of the employee's address.,The county of the employee's address.,Employee's address line.,The nationality of the worker,,Contractor's role - equivalent of what a job title would be,Worker's seniority level within the organization,This information will form the basis of the employment agreement.,Full-time or part-time employment,Employee payment method,Date when the worker started or starts in the organization (this can be backdated),Employee gross salary,Days off per year. If policy is unlimited; leave the field blank,Benefit group the employee falls into for benefit offerings,Worker's department within the organization,Worker's role within department
+CONSTRAINTS,Enter min 1 and max 50 characters,Enter min 1 and max 100 characters,Enter a valid email address that contains a @-symbol and a valid domain name,Enter valid zip code,Use ISO 3166-2 format,The city of the employee's address.,The county of the employee's address.,Enter address,Use the two letter country code (ISO 3166-1 format),Select from options,Enter max 255 characters,Select from options,Enter max 1000 characters,Select from options,Select from options,Accepted format is YYYY-MM-DD,Enter a numerical value,Enter a numerical value,Select from options,"Select from options, demonstrate hierarchy among departments by adding a ""//"" between them. Must match the department names in organization settings",Select from options
+EXAMPLES,"Albus, Erik, Adriana","Dumbledore, Schmidt, Costa",johndoe@organization.com,90001,"CA, AZ, NY","Copenhagen, New York, Sao Paulo","Orange, Los Angeles, San Francisco","2566 Dow ST., 1234 Main ST.","US, ES, BR","Office - 3700 E Plano Parkway, Remote - Colorado, Remote - Kentucky","ACCOUNTING CLERK, ACCOUNTS PAYABLE, ACCOUNTS RECEIVABLE SPECIALIST","Not applicable, Junior (Individual Contributor Level 1), Mid (Individual Contributor Level 2)","Testing and evaluating new programs, 'Modifying software to fix error, improve its performance'","Part time, Full time","SALARY, HOURLY, NON_PAID_OWNER, COMMISSION_ONLY",2026-02-23,"140000, 60000, 210900","30, 28, 18",ALL EMPLOYEES,Admin - Comnet,Head of Department
+----------,----------,----------,----------,----------,----------,----------,----------,----------,----------,----------,----------,----------,----------,----------,----------,----------,----------,----------,----------,----------,----------
+1,,,,,,,,,,,,,,,,,,,,,
+2,,,,,,,,,,,,,,,,,,,,,
+3,,,,,,,,,,,,,,,,,,,,,
+4,,,,,,,,,,,,,,,,,,,,,
+5,,,,,,,,,,,,,,,,,,,,,
+6,,,,,,,,,,,,,,,,,,,,,
+7,,,,,,,,,,,,,,,,,,,,,
+8,,,,,,,,,,,,,,,,,,,,,
+9,,,,,,,,,,,,,,,,,,,,,
+10,,,,,,,,,,,,,,,,,,,,,
+11,,,,,,,,,,,,,,,,,,,,,
+12,,,,,,,,,,,,,,,,,,,,,
+13,,,,,,,,,,,,,,,,,,,,,
+14,,,,,,,,,,,,,,,,,,,,,
+15,,,,,,,,,,,,,,,,,,,,,
+16,,,,,,,,,,,,,,,,,,,,,
+17,,,,,,,,,,,,,,,,,,,,,
+18,,,,,,,,,,,,,,,,,,,,,
+19,,,,,,,,,,,,,,,,,,,,,
+20,,,,,,,,,,,,,,,,,,,,,
+21,,,,,,,,,,,,,,,,,,,,,
+22,,,,,,,,,,,,,,,,,,,,,
+23,,,,,,,,,,,,,,,,,,,,,
+24,,,,,,,,,,,,,,,,,,,,,
+add more,,,,,,,,,,,,,,,,,,,,,
