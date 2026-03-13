@@ -211,7 +211,7 @@ const UNIVERSAL_CONFIG = {
     "Job scope":            { source_header: "Job description", optional: true },
     "Employment type":      { source_header: "Employment Type", transform: "employment_type_map" },
     "Pay method":           { source_header: "Compensation Type", transform: "pay_method_map" },
-    "Contract start date":  { source_header: "Original start date", transform: "excel_date_to_iso" },
+    "Contract start date":  { source_header: "PEO Start Date", transform: "excel_date_to_iso" },
     "Gross Salary":         { source_header: "Pay Rate", transform: "clean_salary" },
     "Time off":             { blank: true },
     "Benefit group":        { default: "ALL EMPLOYEES" },
